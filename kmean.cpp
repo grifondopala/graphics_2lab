@@ -3,8 +3,10 @@
 using namespace std;
 using namespace cv;
 
+const int MAX_ITERATIONS = 500;
+
 double distance(const Vec3b& a, const Vec3b& b) {
-    return sqrt(pow(a[0] - b[0], 2) + pow(a[1] - b[1], 2) + pow(a[2] - b[2], 2));
+    return (a[0] - b[0])*(a[0] - b[0]) + (a[1] - b[1])*(a[1] - b[1]) + (a[2] - b[2])*(a[2] - b[2]);
 }
 
 Vec3b getNearColor(const vector<Vec3b>& palette, const Vec3b& color) {
@@ -43,6 +45,7 @@ vector<Vec3b> kMeans(const vector<Vec3b>& palette, int k) {
 
     vector<int> labels(palette.size());
     bool changed;
+    int iterations = 0;
 
     do {
         changed = false;
@@ -76,7 +79,9 @@ vector<Vec3b> kMeans(const vector<Vec3b>& palette, int k) {
             }
         }
 
-    } while (changed);
+        iterations++;
+
+    } while (changed && iterations < MAX_ITERATIONS);
 
     return centroids;
 }

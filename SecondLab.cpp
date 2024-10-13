@@ -43,17 +43,16 @@ vector<int> getError(const Vec3b color, const Vec3b newColor) {
 
 
 Mat FloydSteinberg(const Mat& image, const vector<Vec3b> newPalette) {
-    Mat result = Mat::zeros(image.size(), CV_8UC3);
-    Mat tempImage = image.clone();
+    Mat result = image.clone();
 
     float errorRatio[2][3] = {
-        {0, 0, 7 / 16},
-        {3 / 16, 5 / 16, 1 / 16},
+        {0, 0, 7.0f / 16.0f},
+        {3.0f / 16.0f, 5.0f / 16.0f, 1.0f / 16.0f},
     };
 
-    for (int y = 0; y < image.rows; y++) {
-        for (int x = 0; x < image.cols; x++) {
-            Vec3b color = tempImage.at<Vec3b>(y, x);
+    for (int y = 0; y < result.rows; y++) {
+        for (int x = 0; x < result.cols; x++) {
+            Vec3b color = result.at<Vec3b>(y, x);
             Vec3b newColor = getNearColor(newPalette, color);
             vector<int> error = getError(color, newColor);
 
@@ -61,11 +60,11 @@ Mat FloydSteinberg(const Mat& image, const vector<Vec3b> newPalette) {
                 for (int i = 0; i <= 2; ++i) {
                     int neighbourY = y + j;
                     int neighbourX = x + i - 1;
-                    if (neighbourY >= 0 && neighbourY < image.rows && neighbourX >= 0 && neighbourX < image.cols) {
+                    if (neighbourY >= 0 && neighbourY < result.rows && neighbourX >= 0 && neighbourX < result.cols) {
 
-                        Vec3b neighbourColor = tempImage.at<Vec3b>(neighbourY, neighbourX);
+                        Vec3b neighbourColor = result.at<Vec3b>(neighbourY, neighbourX);
                         for (int c = 0; c < 3; c++) {
-                            tempImage.at<Vec3b>(neighbourY, neighbourX)[c] = saturate_cast<uchar>(neighbourColor[c] + error[c] * errorRatio[j][i]);
+                            result.at<Vec3b>(neighbourY, neighbourX)[c] = saturate_cast<uchar>(neighbourColor[c] + error[c] * errorRatio[j][i]);
                         }
 
                     }
@@ -80,6 +79,15 @@ Mat FloydSteinberg(const Mat& image, const vector<Vec3b> newPalette) {
     return result;
 }
 
+Mat resizeImage(const Mat& image) {
+    Mat smallImage;
+    int width = 100;
+    int height = static_cast<int>(static_cast<float>(image.rows) / image.cols * width);
+    resize(image, smallImage, Size(width, height));
+
+    return smallImage;
+}
+
 
 int main() {
 
@@ -88,13 +96,12 @@ int main() {
     for (int j = 0; j < 2; ++j) {
         Mat image = loadImage(pictures[j] + ".jpg");
 
-        Mat smallImage;
-        resize(image, smallImage, Size(100, 100));
+        Mat smallImage = resizeImage(image);
 
         vector<Vec3b> imagePalette = getPaletteImage(smallImage);
 
         for (int n = 1; n <= 4; n++) {
-            int k = pow(2, n);
+            int k = 1 << n;
 
             vector<Vec3b> newPalette = kMeans(imagePalette, k);
 
